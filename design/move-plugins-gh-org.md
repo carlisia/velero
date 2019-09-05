@@ -1,32 +1,21 @@
-# Design proposal template (replace with your proposal's title)
+# Plan to extract the provider plugins out of (the Velero) tree
 
-One to two sentences that describes the goal of this proposal.
-The reader should be able to tell by the title, and the opening paragraph, if this document is relevant to them.
-
-_Note_: The preferred style for design documents is one sentence per line.
-*Do not wrap lines*.
-This aids in review of the document as changes to a line are not obscured by the reflowing those changes caused and has a side effect of avoiding debate about one or two space after a period.
+Currently, the Velero project contains primitive plugins for three cloud providers: AWS, Azure, and GCP. The Velero team has decided to extract each of those plugins into their own separate repository.  This document details the steps necessary to create the new repositories, as well as a general design for what each plugin project will look like.
 
 ## Goals
 
-- A short list of things which will be accomplished by implementing this proposal.
-- Two things is ok.
-- Three is pushing it.
-- More than three goals suggests that the proposal's scope is too large.
+- Have 3 new repositories for each cloud provider plugin currently supported by the Velero team: AWS, Azure, and GCP
+- Have the currently primitive cloud provider plugins behave like any other plugin external to Velero
 
 ## Non Goals
 
-- A short list of items which are:
-- a. out of scope
-- b. follow on items which are deliberately excluded from this proposal.
+- Extend the Velero plugin framework capability in any way
+- Create GH repositories for any plugin other then the currently primitive plugins
+- Extract out any plugin that is not a cloud provider plugin (ex: item action related plugins)
 
 ## Background
 
-One to two paragraphs of exposition to set the context for this proposal.
-
-## High-Level Design
-
-One to two paragraphs that describe the high level changes that will be made to implement this proposal.
+With more and more providers wanting to support Velero, it gets more difficult to justify excluding those from being in-tree just as with the three original ones. At the same time, if we were to include any more plugins in-tree, it would ultimately become the responsibility of the Velero team to maintain all plugins. This move aims to equalize the field so all plugins are treated equally. We also hope that, with time, developers interested in getting involved in the upkeep of those plugins will become active enough to be promoted to maintainers. Lastly, having the plugins live in their own individual repositories allows for iteration on them separately from the core codebase.
 
 ## Action items
 
@@ -36,8 +25,29 @@ One to two paragraphs that describe the high level changes that will be made to 
 - [ ] Make owners of the Velero repo owners of each repo in the new org. Who: new org owner; TBD
 - [ ] Create deployment and grpc-push scripts with the new location path. Who: @carlisia
 - [ ] Add Travis CI. Who: Any of the new repo owners; TBD
-- [ ] Add webhook: signoff checker. Who: Any of the new repo owners; TBD
 - [ ] Add webhook: travis CI. Who: Any of the new repo owners; TBD
+
+### Notes/How-Tos
+
+#### Creating the GH repository
+
+[Pending] We will find out this week who will be the organization owner(s) who will accept this transfer in the new GH org. This organization owner will make all current owners in the Velero repo owners in each of the new org plugin repos.
+
+#### Setting up Travis CI
+
+Someone with owner permission on the new repository needs to go to their Travis CI account and authorize Travis CI on the repo. Here are instructions: https://docs.travis-ci.com/user/tutorial/.
+
+After this, any webhook notifications can be added following these instructions: https://docs.travis-ci.com/user/notifications/#configuring-webhook-notifications.
+
+## High-Level Design
+
+Each provider plugin will be an independent project, using the Velero library to implement their specific functionalities.
+
+The way Velero is installed will be changed to accomodate installing these plugins at deploy time, namely the Velero `install` command, as well as the Helm chart.
+
+Each plugin repository will need to have their respective images built and pushed to the same registry as the Velero images.
+
+One to two paragraphs that describe the high level changes that will be made to implement this proposal.
 
 ## Detailed Design
 
