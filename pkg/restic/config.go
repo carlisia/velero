@@ -18,72 +18,70 @@ package restic
 
 import (
 	"fmt"
-	"path"
 	"strings"
 
 	"github.com/pkg/errors"
 
 	velerov1api "github.com/heptio/velero/pkg/apis/velero/v1"
-	"github.com/heptio/velero/pkg/cloudprovider/aws"
-	"github.com/heptio/velero/pkg/persistence"
+	// "github.com/heptio/velero/pkg/cloudprovider/aws"
 )
 
 type BackendType string
 
 const (
-	AWSBackend   BackendType = "velero.io/aws"
+	// AWSBackend   BackendType = "velero.io/aws"
 	AzureBackend BackendType = "velero.io/azure"
 	GCPBackend   BackendType = "velero.io/gcp"
 )
 
 // this func is assigned to a package-level variable so it can be
 // replaced when unit-testing
-var getAWSBucketRegion = aws.GetBucketRegion
+// var getAWSBucketRegion = aws.GetBucketRegion
 
 // getRepoPrefix returns the prefix of the value of the --repo flag for
 // restic commands, i.e. everything except the "/<repo-name>".
 func getRepoPrefix(location *velerov1api.BackupStorageLocation) (string, error) {
-	var bucket, prefix string
+	// var bucket, prefix string
 
-	if location.Spec.ObjectStorage != nil {
-		layout := persistence.NewObjectStoreLayout(location.Spec.ObjectStorage.Prefix)
+	// if location.Spec.ObjectStorage != nil {
+	// 	layout := persistence.NewObjectStoreLayout(location.Spec.ObjectStorage.Prefix)
 
-		bucket = location.Spec.ObjectStorage.Bucket
-		prefix = layout.GetResticDir()
-	}
+	// 	bucket = location.Spec.ObjectStorage.Bucket
+	// 	prefix = layout.GetResticDir()
+	// }
 
-	var provider = location.Spec.Provider
-	if !strings.Contains(provider, "/") {
-		provider = "velero.io/" + provider
-	}
+	// var provider = location.Spec.Provider
+	// if !strings.Contains(provider, "/") {
+	// 	provider = "velero.io/" + provider
+	// }
 
-	if repoPrefix := location.Spec.Config["resticRepoPrefix"]; repoPrefix != "" {
-		return repoPrefix, nil
-	}
+	// if repoPrefix := location.Spec.Config["resticRepoPrefix"]; repoPrefix != "" {
+	// 	return repoPrefix, nil
+	// }
 
-	switch BackendType(provider) {
-	case AWSBackend:
-		var url string
-		switch {
-		// non-AWS, S3-compatible object store
-		case location.Spec.Config["s3Url"] != "":
-			url = location.Spec.Config["s3Url"]
-		default:
-			region, err := getAWSBucketRegion(bucket)
-			if err != nil {
-				url = "s3.amazonaws.com"
-				break
-			}
+	// switch BackendType(provider) {
+	// case AWSBackend:
+	// 	var url string
+	// 	switch {
+	// 	// non-AWS, S3-compatible object store
+	// 	case location.Spec.Config["s3Url"] != "":
+	// 		url = location.Spec.Config["s3Url"]
+	// 	default:
+	// 		region, err := getAWSBucketRegion(bucket)
+	// 		if err != nil {
+	// 			url = "s3.amazonaws.com"
+	// 			break
+	// 		}
 
-			url = fmt.Sprintf("s3-%s.amazonaws.com", region)
-		}
+	// 		url = fmt.Sprintf("s3-%s.amazonaws.com", region)
+	// 	}
 
-		return fmt.Sprintf("s3:%s/%s", strings.TrimSuffix(url, "/"), path.Join(bucket, prefix)), nil
-	case AzureBackend:
-		return fmt.Sprintf("azure:%s:/%s", bucket, prefix), nil
-	case GCPBackend:
-		return fmt.Sprintf("gs:%s:/%s", bucket, prefix), nil
-	}
+	// 	return fmt.Sprintf("s3:%s/%s", strings.TrimSuffix(url, "/"), path.Join(bucket, prefix)), nil
+	// case AzureBackend:
+	// 	return fmt.Sprintf("azure:%s:/%s", bucket, prefix), nil
+	// case GCPBackend:
+	// 	return fmt.Sprintf("gs:%s:/%s", bucket, prefix), nil
+	// }
 
 	return "", errors.New("restic repository prefix (resticRepoPrefix) not specified in backup storage location's config")
 }
