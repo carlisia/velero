@@ -3,6 +3,9 @@ module github.com/vmware-tanzu/velero
 go 1.14
 
 require (
+	k8s.io/apimachinery v0.17.2
+	k8s.io/client-go v0.17.2
+	sigs.k8s.io/controller-runtime v0.5.0
 	cloud.google.com/go v0.46.2 // indirect
 	github.com/Azure/azure-sdk-for-go v35.0.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.9.0
