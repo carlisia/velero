@@ -1,6 +1,6 @@
 module github.com/vmware-tanzu/velero
 
-go 1.14
+go 1.13
 
 require (
 	cloud.google.com/go v0.46.2 // indirect
@@ -39,4 +39,5 @@ require (
 	k8s.io/client-go v0.17.4
 	k8s.io/klog v1.0.0
 	k8s.io/utils v0.0.0-20191218082557-f07c713de883 // indirect
+	sigs.k8s.io/controller-runtime v0.5.0
 )
