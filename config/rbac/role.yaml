@@ -1,0 +1,108 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - velero.io.velero.io
+  resources:
+  - backupstoragelocations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - velero.io.velero.io
+  resources:
+  - backupstoragelocations/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - velero.io.velero.io
+  resources:
+  - backupstoragelocationtestings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - velero.io.velero.io
+  resources:
+  - backupstoragelocationtestings/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - velero.io.velero.io
+  resources:
+  - backupstoragelocationtestingthreefours
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - velero.io.velero.io
+  resources:
+  - backupstoragelocationtestingthreefours/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - velero.io.velero.io
+  resources:
+  - backupstoragelocationtestingthrees
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - velero.io.velero.io
+  resources:
+  - backupstoragelocationtestingthrees/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - velero.io.velero.io
+  resources:
+  - backupstoragelocationtestingtwoes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - velero.io.velero.io
+  resources:
+  - backupstoragelocationtestingtwoes/status
+  verbs:
+  - get
+  - patch
+  - update

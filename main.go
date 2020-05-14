@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	veleroiov1 "github.com/vmware-tanzu/velero/api/v1"
+	"github.com/vmware-tanzu/velero/controllers"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -65,6 +66,46 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err = (&controllers.BackupStorageLocationReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("BackupStorageLocation"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "BackupStorageLocation")
+		os.Exit(1)
+	}
+	if err = (&controllers.BackupStorageLocationtestingReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("BackupStorageLocationtesting"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "BackupStorageLocationtesting")
+		os.Exit(1)
+	}
+	if err = (&controllers.BackupStorageLocationtestingtwoReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("BackupStorageLocationtestingtwo"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "BackupStorageLocationtestingtwo")
+		os.Exit(1)
+	}
+	if err = (&controllers.BackupStorageLocationtestingthreeReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("BackupStorageLocationtestingthree"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "BackupStorageLocationtestingthree")
+		os.Exit(1)
+	}
+	if err = (&controllers.BackupStorageLocationtestingthreefourReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("BackupStorageLocationtestingthreefour"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "BackupStorageLocationtestingthreefour")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
