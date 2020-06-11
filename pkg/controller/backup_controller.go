@@ -68,7 +68,7 @@ type backupController struct {
 	backupper                   pkgbackup.Backupper
 	lister                      velerov1listers.BackupLister
 	client                      velerov1client.BackupsGetter
-	k8sClient                   client.Client
+	kbclient                    client.Client
 	clock                       clock.Clock
 	backupLogLevel              logrus.Level
 	newPluginManager            func(logrus.FieldLogger) clientmgmt.Manager
@@ -93,7 +93,7 @@ func NewBackupController(
 	backupLogLevel logrus.Level,
 	newPluginManager func(logrus.FieldLogger) clientmgmt.Manager,
 	backupTracker BackupTracker,
-	k8sClient client.Client,
+	kbclient client.Client,
 	defaultBackupLocation string,
 	defaultBackupTTL time.Duration,
 	volumeSnapshotLocationLister velerov1listers.VolumeSnapshotLocationLister,
@@ -113,7 +113,7 @@ func NewBackupController(
 		backupLogLevel:              backupLogLevel,
 		newPluginManager:            newPluginManager,
 		backupTracker:               backupTracker,
-		k8sClient:                   k8sClient,
+		kbclient:                    kbclient,
 		defaultBackupLocation:       defaultBackupLocation,
 		defaultBackupTTL:            defaultBackupTTL,
 		snapshotLocationLister:      volumeSnapshotLocationLister,
@@ -368,7 +368,7 @@ func (c *backupController) prepareBackupRequest(backup *velerov1api.Backup) *pkg
 
 	// validate the storage location, and store the BackupStorageLocation API obj on the request
 	storageLocation := &velerov1api.BackupStorageLocation{}
-	if err := c.k8sClient.Get(context.Background(), client.ObjectKey{
+	if err := c.kbclient.Get(context.Background(), client.ObjectKey{
 		Namespace: request.Namespace,
 		Name:      request.Spec.StorageLocation,
 	}, storageLocation); err != nil {
