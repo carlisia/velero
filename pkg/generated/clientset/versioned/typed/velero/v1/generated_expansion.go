@@ -24,8 +24,6 @@ type BackupStorageLocationExpansion interface{}
 
 type DeleteBackupRequestExpansion interface{}
 
-type DownloadRequestExpansion interface{}
-
 type PodVolumeBackupExpansion interface{}
 
 type PodVolumeRestoreExpansion interface{}

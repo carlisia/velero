@@ -42,14 +42,6 @@ type DeleteBackupRequestListerExpansion interface{}
 // DeleteBackupRequestNamespaceLister.
 type DeleteBackupRequestNamespaceListerExpansion interface{}
 
-// DownloadRequestListerExpansion allows custom methods to be added to
-// DownloadRequestLister.
-type DownloadRequestListerExpansion interface{}
-
-// DownloadRequestNamespaceListerExpansion allows custom methods to be added to
-// DownloadRequestNamespaceLister.
-type DownloadRequestNamespaceListerExpansion interface{}
-
 // PodVolumeBackupListerExpansion allows custom methods to be added to
 // PodVolumeBackupLister.
 type PodVolumeBackupListerExpansion interface{}

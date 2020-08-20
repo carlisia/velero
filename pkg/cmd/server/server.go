@@ -761,35 +761,19 @@ func (s *server) runControllers(defaultVolumeSnapshotLocations map[string]string
 		}
 	}
 
-	downloadrequestControllerRunInfo := func() controllerRunInfo {
-		downloadRequestController := controller.NewDownloadRequestController(
-			s.veleroClient.VeleroV1(),
-			s.sharedInformerFactory.Velero().V1().DownloadRequests(),
-			s.sharedInformerFactory.Velero().V1().Restores().Lister(),
-			s.mgr.GetClient(),
-			s.sharedInformerFactory.Velero().V1().Backups().Lister(),
-			newPluginManager,
-			s.logger,
-		)
-
-		return controllerRunInfo{
-			controller: downloadRequestController,
-			numWorkers: defaultControllerWorkers,
-		}
-	}
-
 	enabledControllers := map[string]func() controllerRunInfo{
-		BackupSyncControllerKey:      backupSyncControllerRunInfo,
-		BackupControllerKey:          backupControllerRunInfo,
-		ScheduleControllerKey:        scheduleControllerRunInfo,
-		GcControllerKey:              gcControllerRunInfo,
-		BackupDeletionControllerKey:  deletionControllerRunInfo,
-		RestoreControllerKey:         restoreControllerRunInfo,
-		ResticRepoControllerKey:      resticRepoControllerRunInfo,
-		DownloadRequestControllerKey: downloadrequestControllerRunInfo,
+		BackupSyncControllerKey:     backupSyncControllerRunInfo,
+		BackupControllerKey:         backupControllerRunInfo,
+		ScheduleControllerKey:       scheduleControllerRunInfo,
+		GcControllerKey:             gcControllerRunInfo,
+		BackupDeletionControllerKey: deletionControllerRunInfo,
+		RestoreControllerKey:        restoreControllerRunInfo,
+		ResticRepoControllerKey:     resticRepoControllerRunInfo,
 	}
 	// Note: all runtime type controllers that can be disabled are grouped separately, below:
 	enabledRuntimeControllers := make(map[string]struct{})
+	enabledRuntimeControllers[ServerStatusRequestControllerKey] = struct{}{}
+	enabledRuntimeControllers[ServerStatusRequestControllerKey] = struct{}{}
 	enabledRuntimeControllers[ServerStatusRequestControllerKey] = struct{}{}
 
 	if s.config.restoreOnly {
@@ -817,6 +801,9 @@ func (s *server) runControllers(defaultVolumeSnapshotLocations map[string]string
 			}
 		}
 	}
+	// Note: all runtime type controllers that can be disabled are grouped separately, below:
+	enabledRuntimeControllers := make(map[string]struct{})
+	enabledRuntimeControllers[DownloadRequestControllerKey] = struct{}{}
 
 	// Instantiate the enabled controllers. This needs to be done *before*
 	// the shared informer factory is started, because the controller
@@ -825,6 +812,13 @@ func (s *server) runControllers(defaultVolumeSnapshotLocations map[string]string
 	controllers := make([]controllerRunInfo, 0, len(enabledControllers))
 	for _, newController := range enabledControllers {
 		controllers = append(controllers, newController())
+	}
+	// remove disabled runtime type controllers
+	for _, controllerName := range s.config.disabledControllers {
+		if _, ok := enabledRuntimeControllers[controllerName]; ok {
+			s.logger.Infof("Disabling controller: %s", controllerName)
+			delete(enabledRuntimeControllers, controllerName)
+		}
 	}
 
 	// start the informers & and wait for the caches to sync
@@ -878,6 +872,15 @@ func (s *server) runControllers(defaultVolumeSnapshotLocations map[string]string
 		}
 		if err := r.SetupWithManager(s.mgr); err != nil {
 			s.logger.Fatal(err, "unable to create controller", "controller", ServerStatusRequestControllerKey)
+		}
+	}
+	if _, ok := enabledRuntimeControllers[DownloadRequestControllerKey]; ok {
+		if err := (&controller.DownloadRequestReconciler{
+			Scheme: s.mgr.GetScheme(),
+
+			Log: s.logger,
+		}).SetupWithManager(s.mgr); err != nil {
+			s.logger.Fatal(err, "unable to create controller", "controller", DownloadRequestControllerKey)
 		}
 	}
 

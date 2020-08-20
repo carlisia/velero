@@ -40,10 +40,6 @@ func (c *FakeVeleroV1) DeleteBackupRequests(namespace string) v1.DeleteBackupReq
 	return &FakeDeleteBackupRequests{c, namespace}
 }
 
-func (c *FakeVeleroV1) DownloadRequests(namespace string) v1.DownloadRequestInterface {
-	return &FakeDownloadRequests{c, namespace}
-}
-
 func (c *FakeVeleroV1) PodVolumeBackups(namespace string) v1.PodVolumeBackupInterface {
 	return &FakePodVolumeBackups{c, namespace}
 }

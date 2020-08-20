@@ -29,7 +29,6 @@ type VeleroV1Interface interface {
 	BackupsGetter
 	BackupStorageLocationsGetter
 	DeleteBackupRequestsGetter
-	DownloadRequestsGetter
 	PodVolumeBackupsGetter
 	PodVolumeRestoresGetter
 	ResticRepositoriesGetter
@@ -54,10 +53,6 @@ func (c *VeleroV1Client) BackupStorageLocations(namespace string) BackupStorageL
 
 func (c *VeleroV1Client) DeleteBackupRequests(namespace string) DeleteBackupRequestInterface {
 	return newDeleteBackupRequests(c, namespace)
-}
-
-func (c *VeleroV1Client) DownloadRequests(namespace string) DownloadRequestInterface {
-	return newDownloadRequests(c, namespace)
 }
 
 func (c *VeleroV1Client) PodVolumeBackups(namespace string) PodVolumeBackupInterface {
