@@ -18,14 +18,6 @@ limitations under the License.
 
 package v1
 
-// BackupListerExpansion allows custom methods to be added to
-// BackupLister.
-type BackupListerExpansion interface{}
-
-// BackupNamespaceListerExpansion allows custom methods to be added to
-// BackupNamespaceLister.
-type BackupNamespaceListerExpansion interface{}
-
 // BackupStorageLocationListerExpansion allows custom methods to be added to
 // BackupStorageLocationLister.
 type BackupStorageLocationListerExpansion interface{}
@@ -65,14 +57,6 @@ type ResticRepositoryListerExpansion interface{}
 // ResticRepositoryNamespaceListerExpansion allows custom methods to be added to
 // ResticRepositoryNamespaceLister.
 type ResticRepositoryNamespaceListerExpansion interface{}
-
-// RestoreListerExpansion allows custom methods to be added to
-// RestoreLister.
-type RestoreListerExpansion interface{}
-
-// RestoreNamespaceListerExpansion allows custom methods to be added to
-// RestoreNamespaceLister.
-type RestoreNamespaceListerExpansion interface{}
 
 // ScheduleListerExpansion allows custom methods to be added to
 // ScheduleLister.

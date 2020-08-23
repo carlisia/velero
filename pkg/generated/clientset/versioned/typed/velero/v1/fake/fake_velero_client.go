@@ -28,10 +28,6 @@ type FakeVeleroV1 struct {
 	*testing.Fake
 }
 
-func (c *FakeVeleroV1) Backups(namespace string) v1.BackupInterface {
-	return &FakeBackups{c, namespace}
-}
-
 func (c *FakeVeleroV1) BackupStorageLocations(namespace string) v1.BackupStorageLocationInterface {
 	return &FakeBackupStorageLocations{c, namespace}
 }
@@ -50,10 +46,6 @@ func (c *FakeVeleroV1) PodVolumeRestores(namespace string) v1.PodVolumeRestoreIn
 
 func (c *FakeVeleroV1) ResticRepositories(namespace string) v1.ResticRepositoryInterface {
 	return &FakeResticRepositories{c, namespace}
-}
-
-func (c *FakeVeleroV1) Restores(namespace string) v1.RestoreInterface {
-	return &FakeRestores{c, namespace}
 }
 
 func (c *FakeVeleroV1) Schedules(namespace string) v1.ScheduleInterface {

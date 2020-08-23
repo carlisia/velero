@@ -14,6 +14,8 @@ spec:
     singular: restore
   preserveUnknownFields: false
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: Restore is a Velero resource that represents the application of

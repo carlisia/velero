@@ -24,8 +24,6 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
-	// Backups returns a BackupInformer.
-	Backups() BackupInformer
 	// BackupStorageLocations returns a BackupStorageLocationInformer.
 	BackupStorageLocations() BackupStorageLocationInformer
 	// DeleteBackupRequests returns a DeleteBackupRequestInformer.
@@ -36,8 +34,6 @@ type Interface interface {
 	PodVolumeRestores() PodVolumeRestoreInformer
 	// ResticRepositories returns a ResticRepositoryInformer.
 	ResticRepositories() ResticRepositoryInformer
-	// Restores returns a RestoreInformer.
-	Restores() RestoreInformer
 	// Schedules returns a ScheduleInformer.
 	Schedules() ScheduleInformer
 	// ServerStatusRequests returns a ServerStatusRequestInformer.
@@ -55,11 +51,6 @@ type version struct {
 // New returns a new Interface.
 func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakListOptions internalinterfaces.TweakListOptionsFunc) Interface {
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
-}
-
-// Backups returns a BackupInformer.
-func (v *version) Backups() BackupInformer {
-	return &backupInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // BackupStorageLocations returns a BackupStorageLocationInformer.
@@ -85,11 +76,6 @@ func (v *version) PodVolumeRestores() PodVolumeRestoreInformer {
 // ResticRepositories returns a ResticRepositoryInformer.
 func (v *version) ResticRepositories() ResticRepositoryInformer {
 	return &resticRepositoryInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
-}
-
-// Restores returns a RestoreInformer.
-func (v *version) Restores() RestoreInformer {
-	return &restoreInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // Schedules returns a ScheduleInformer.

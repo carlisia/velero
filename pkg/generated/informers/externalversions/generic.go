@@ -53,8 +53,6 @@ func (f *genericInformer) Lister() cache.GenericLister {
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
 	// Group=velero.io, Version=v1
-	case v1.SchemeGroupVersion.WithResource("backups"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Velero().V1().Backups().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("backupstoragelocations"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Velero().V1().BackupStorageLocations().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("deletebackuprequests"):
@@ -65,8 +63,6 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Velero().V1().PodVolumeRestores().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("resticrepositories"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Velero().V1().ResticRepositories().Informer()}, nil
-	case v1.SchemeGroupVersion.WithResource("restores"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Velero().V1().Restores().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("schedules"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Velero().V1().Schedules().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("serverstatusrequests"):

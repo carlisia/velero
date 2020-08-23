@@ -18,8 +18,6 @@ limitations under the License.
 
 package v1
 
-type BackupExpansion interface{}
-
 type BackupStorageLocationExpansion interface{}
 
 type DeleteBackupRequestExpansion interface{}
@@ -29,8 +27,6 @@ type PodVolumeBackupExpansion interface{}
 type PodVolumeRestoreExpansion interface{}
 
 type ResticRepositoryExpansion interface{}
-
-type RestoreExpansion interface{}
 
 type ScheduleExpansion interface{}
 

@@ -249,8 +249,14 @@ type RestoreStatus struct {
 	CompletionTimestamp *metav1.Time `json:"completionTimestamp,omitempty"`
 }
 
-// +genclient
+// TODO(2.0) After converting all resources to use the runttime-controller client,
+// the k8s:deepcopy marker will no longer be needed and should be removed.
+// +genclien
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:object:root=true
+// +kubebuilder:object:generate=true
+// +kubebuilder:storageversion
+// +kubebuilder:subresource:status
 
 // Restore is a Velero resource that represents the application of
 // resources from a Velero backup to a target Kubernetes cluster.
@@ -267,7 +273,12 @@ type Restore struct {
 	Status RestoreStatus `json:"status,omitempty"`
 }
 
+// TODO(2.0) After converting all resources to use the runttime-controller client,
+// the k8s:deepcopy marker will no longer be needed and should be removed.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:object:root=true
+// +kubebuilder:rbac:groups=velero.io,resources=restores,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=velero.io,resources=restores/status,verbs=get;update;patch
 
 // RestoreList is a list of Restores.
 type RestoreList struct {

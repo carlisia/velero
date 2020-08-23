@@ -106,7 +106,7 @@ type DownloadRequest struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 // +kubebuilder:rbac:groups=velero.io,resources=downloadrequests,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=velero.io,resources=downloadrequests/status,verbs=get;update;patc
+// +kubebuilder:rbac:groups=velero.io,resources=downloadrequests/status,verbs=get;update;patch
 
 // DownloadRequestList is a list of DownloadRequests.
 type DownloadRequestList struct {

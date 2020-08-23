@@ -773,8 +773,7 @@ func (s *server) runControllers(defaultVolumeSnapshotLocations map[string]string
 	// Note: all runtime type controllers that can be disabled are grouped separately, below:
 	enabledRuntimeControllers := make(map[string]struct{})
 	enabledRuntimeControllers[ServerStatusRequestControllerKey] = struct{}{}
-	enabledRuntimeControllers[ServerStatusRequestControllerKey] = struct{}{}
-	enabledRuntimeControllers[ServerStatusRequestControllerKey] = struct{}{}
+	enabledRuntimeControllers[DownloadRequestControllerKey] = struct{}{}
 
 	if s.config.restoreOnly {
 		s.logger.Info("Restore only mode - not starting the backup, schedule, delete-backup, or GC controllers")
@@ -801,9 +800,6 @@ func (s *server) runControllers(defaultVolumeSnapshotLocations map[string]string
 			}
 		}
 	}
-	// Note: all runtime type controllers that can be disabled are grouped separately, below:
-	enabledRuntimeControllers := make(map[string]struct{})
-	enabledRuntimeControllers[DownloadRequestControllerKey] = struct{}{}
 
 	// Instantiate the enabled controllers. This needs to be done *before*
 	// the shared informer factory is started, because the controller
@@ -874,12 +870,20 @@ func (s *server) runControllers(defaultVolumeSnapshotLocations map[string]string
 			s.logger.Fatal(err, "unable to create controller", "controller", ServerStatusRequestControllerKey)
 		}
 	}
-	if _, ok := enabledRuntimeControllers[DownloadRequestControllerKey]; ok {
-		if err := (&controller.DownloadRequestReconciler{
-			Scheme: s.mgr.GetScheme(),
 
+	if _, ok := enabledRuntimeControllers[DownloadRequestControllerKey]; ok {
+		r := controller.DownloadRequestReconciler{
+			Scheme: s.mgr.GetScheme(),
+			Client: s.mgr.GetClient(),
+			Ctx:    s.ctx,
+			DownloadRequest: velero.DownloadRequest{
+				Clock:            clock.RealClock{},
+				NewPluginManager: newPluginManager,
+				NewBackupStore:   persistence.NewObjectBackupStore,
+			},
 			Log: s.logger,
-		}).SetupWithManager(s.mgr); err != nil {
+		}
+		if err := r.SetupWithManager(s.mgr); err != nil {
 			s.logger.Fatal(err, "unable to create controller", "controller", DownloadRequestControllerKey)
 		}
 	}

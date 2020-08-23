@@ -22,7 +22,6 @@ import (
 	"github.com/sirupsen/logrus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/tools/cache"
 	ctrl "sigs.k8s.io/controller-runtime"
 	kbclient "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -43,30 +42,36 @@ type DownloadRequestReconciler struct {
 // +kubebuilder:rbac:groups=velero.io,resources=backupstoragelocations,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=velero.io,resources=downloadrequests/status,verbs=get;update;patch
 func (r *DownloadRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithField("controller", "download-request")
+	log := r.Log.WithFields(logrus.Fields{
+		"controller":      "download-request",
+		"downloadRequest": req.NamespacedName,
+	})
 
-	r.Log.Debug("Running processDownloadRequest")
-	ns, name, err := cache.SplitMetaNamespaceKey(key)
-	if err != nil {
-		log.WithError(err).Error("error splitting queue key")
-		return ctrl.Result{Requeue: true}, err
-	}
+	// Fetch the DownloadRequest instance.
+	log.Debug("Getting DownloadRequest")
+	downloadRequest := &velerov1api.DownloadRequest{}
+	if err := r.Client.Get(r.Ctx, req.NamespacedName, downloadRequest); err != nil {
+		if apierrors.IsNotFound(err) {
+			log.WithError(err).Error("DownloadRequest not found")
+			return ctrl.Result{}, nil
+		}
 
-	downloadRequest, err := c.downloadRequestLister.DownloadRequests(ns).Get(name)
-	if apierrors.IsNotFound(err) {
-		log.Debug("Unable to find DownloadRequest")
-		return ctrl.Result{Requeue: true}, err
-	}
-	if err != nil {
-		// return errors.Wrap(err, "error getting DownloadRequest")
-		return ctrl.Result{Requeue: true}, err
+		log.WithError(err).Error("Error getting DownloadRequest")
+		// Error reading the object - requeue the request.
+		return ctrl.Result{}, err
 	}
 
 	switch downloadRequest.Status.Phase {
 	case "", velerov1api.DownloadRequestPhaseNew:
-		return c.generatePreSignedURL(downloadRequest, log)
+		if err := r.DownloadRequest.GeneratePreSignedURL(r.Ctx, r.Client, log, downloadRequest); err != nil {
+			log.WithError(err).Error("Unable to update the request")
+			return ctrl.Result{Requeue: true}, err
+		}
 	case velerov1api.DownloadRequestPhaseProcessed:
-		return c.DeleteIfExpired(downloadRequest)
+		if err := r.DownloadRequest.DeleteIfExpired(downloadRequest); err != nil {
+			log.WithError(err).Error("Unable to update the request")
+			return ctrl.Result{Requeue: true}, err
+		}
 	}
 
 	// Requeue is mostly to handle deleting any expired requests that were not
@@ -76,7 +81,7 @@ func (r *DownloadRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, er
 
 func (r *DownloadRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&velerov1api.BackupStorageLocation{}).
+		For(&velerov1api.DownloadRequest{}).
 		Complete(r)
 }
 
