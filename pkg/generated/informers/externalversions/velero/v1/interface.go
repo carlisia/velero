@@ -24,16 +24,22 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
+	// Backups returns a BackupInformer.
+	Backups() BackupInformer
 	// BackupStorageLocations returns a BackupStorageLocationInformer.
 	BackupStorageLocations() BackupStorageLocationInformer
 	// DeleteBackupRequests returns a DeleteBackupRequestInformer.
 	DeleteBackupRequests() DeleteBackupRequestInformer
+	// DownloadRequests returns a DownloadRequestInformer.
+	DownloadRequests() DownloadRequestInformer
 	// PodVolumeBackups returns a PodVolumeBackupInformer.
 	PodVolumeBackups() PodVolumeBackupInformer
 	// PodVolumeRestores returns a PodVolumeRestoreInformer.
 	PodVolumeRestores() PodVolumeRestoreInformer
 	// ResticRepositories returns a ResticRepositoryInformer.
 	ResticRepositories() ResticRepositoryInformer
+	// Restores returns a RestoreInformer.
+	Restores() RestoreInformer
 	// Schedules returns a ScheduleInformer.
 	Schedules() ScheduleInformer
 	// ServerStatusRequests returns a ServerStatusRequestInformer.
@@ -53,6 +59,11 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
+// Backups returns a BackupInformer.
+func (v *version) Backups() BackupInformer {
+	return &backupInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
 // BackupStorageLocations returns a BackupStorageLocationInformer.
 func (v *version) BackupStorageLocations() BackupStorageLocationInformer {
 	return &backupStorageLocationInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
@@ -61,6 +72,11 @@ func (v *version) BackupStorageLocations() BackupStorageLocationInformer {
 // DeleteBackupRequests returns a DeleteBackupRequestInformer.
 func (v *version) DeleteBackupRequests() DeleteBackupRequestInformer {
 	return &deleteBackupRequestInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// DownloadRequests returns a DownloadRequestInformer.
+func (v *version) DownloadRequests() DownloadRequestInformer {
+	return &downloadRequestInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // PodVolumeBackups returns a PodVolumeBackupInformer.
@@ -76,6 +92,11 @@ func (v *version) PodVolumeRestores() PodVolumeRestoreInformer {
 // ResticRepositories returns a ResticRepositoryInformer.
 func (v *version) ResticRepositories() ResticRepositoryInformer {
 	return &resticRepositoryInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// Restores returns a RestoreInformer.
+func (v *version) Restores() RestoreInformer {
+	return &restoreInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // Schedules returns a ScheduleInformer.

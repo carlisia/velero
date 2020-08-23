@@ -79,7 +79,7 @@ type DownloadRequestStatus struct {
 
 // TODO(2.0) After converting all resources to use the runttime-controller client,
 // the k8s:deepcopy marker will no longer be needed and should be removed.
-// +genclien
+// +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 // +kubebuilder:object:generate=true

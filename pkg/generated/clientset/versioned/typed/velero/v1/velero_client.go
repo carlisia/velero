@@ -26,11 +26,14 @@ import (
 
 type VeleroV1Interface interface {
 	RESTClient() rest.Interface
+	BackupsGetter
 	BackupStorageLocationsGetter
 	DeleteBackupRequestsGetter
+	DownloadRequestsGetter
 	PodVolumeBackupsGetter
 	PodVolumeRestoresGetter
 	ResticRepositoriesGetter
+	RestoresGetter
 	SchedulesGetter
 	ServerStatusRequestsGetter
 	VolumeSnapshotLocationsGetter
@@ -41,12 +44,20 @@ type VeleroV1Client struct {
 	restClient rest.Interface
 }
 
+func (c *VeleroV1Client) Backups(namespace string) BackupInterface {
+	return newBackups(c, namespace)
+}
+
 func (c *VeleroV1Client) BackupStorageLocations(namespace string) BackupStorageLocationInterface {
 	return newBackupStorageLocations(c, namespace)
 }
 
 func (c *VeleroV1Client) DeleteBackupRequests(namespace string) DeleteBackupRequestInterface {
 	return newDeleteBackupRequests(c, namespace)
+}
+
+func (c *VeleroV1Client) DownloadRequests(namespace string) DownloadRequestInterface {
+	return newDownloadRequests(c, namespace)
 }
 
 func (c *VeleroV1Client) PodVolumeBackups(namespace string) PodVolumeBackupInterface {
@@ -59,6 +70,10 @@ func (c *VeleroV1Client) PodVolumeRestores(namespace string) PodVolumeRestoreInt
 
 func (c *VeleroV1Client) ResticRepositories(namespace string) ResticRepositoryInterface {
 	return newResticRepositories(c, namespace)
+}
+
+func (c *VeleroV1Client) Restores(namespace string) RestoreInterface {
+	return newRestores(c, namespace)
 }
 
 func (c *VeleroV1Client) Schedules(namespace string) ScheduleInterface {
