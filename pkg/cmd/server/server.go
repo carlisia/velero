@@ -873,15 +873,12 @@ func (s *server) runControllers(defaultVolumeSnapshotLocations map[string]string
 
 	if _, ok := enabledRuntimeControllers[DownloadRequestControllerKey]; ok {
 		r := controller.DownloadRequestReconciler{
-			Scheme: s.mgr.GetScheme(),
-			Client: s.mgr.GetClient(),
-			Ctx:    s.ctx,
-			DownloadRequest: velero.DownloadRequest{
-				Clock:            clock.RealClock{},
-				NewPluginManager: newPluginManager,
-				NewBackupStore:   persistence.NewObjectBackupStore,
-			},
-			Log: s.logger,
+			Scheme:             s.mgr.GetScheme(),
+			Client:             s.mgr.GetClient(),
+			Ctx:                s.ctx,
+			Clock:              clock.RealClock{},
+			BackupStoreManager: velero.NewBackupStoreManager(newPluginManager, persistence.NewObjectBackupStore),
+			Log:                s.logger,
 		}
 		if err := r.SetupWithManager(s.mgr); err != nil {
 			s.logger.Fatal(err, "unable to create controller", "controller", DownloadRequestControllerKey)

@@ -1,5 +1,5 @@
 /*
-Copyright 2017 the Velero contributors.
+Copyright 2020 the Velero contributors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -260,6 +260,8 @@ func newBackupLocation(name, provider, bucket string) *velerov1api.BackupStorage
 // 			expired:         true,
 // 		},
 // 	}
+
+const signedURLTTL = 10 * time.Minute
 
 // 	for _, tc := range tests {
 // 		t.Run(tc.name, func(t *testing.T) {

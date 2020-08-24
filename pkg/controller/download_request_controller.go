@@ -1,5 +1,5 @@
 /*
-Copyright 2017 the Velero contributors.
+Copyright 2020 the Velero contributors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,27 +19,34 @@ package controller
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/clock"
+	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	kbclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/vmware-tanzu/velero/internal/velero"
 	velerov1api "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
+	"github.com/vmware-tanzu/velero/pkg/persistence"
 )
 
-// DownloadRequestReconciler reconciles a BackupStorageLocation object
+// DownloadRequestReconciler reconciles a DownloadRequest object
 type DownloadRequestReconciler struct {
-	Scheme          *runtime.Scheme
-	Client          kbclient.Client
-	Ctx             context.Context
-	DownloadRequest velero.DownloadRequest
+	Scheme             *runtime.Scheme
+	Client             kbclient.Client
+	Ctx                context.Context
+	Clock              clock.Clock
+	BackupStoreManager velero.BackupStoreManager
 
 	Log logrus.FieldLogger
 }
 
-// +kubebuilder:rbac:groups=velero.io,resources=backupstoragelocations,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=velero.io,resources=downloadrequests,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=velero.io,resources=downloadrequests/status,verbs=get;update;patch
 func (r *DownloadRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithFields(logrus.Fields{
@@ -52,27 +59,74 @@ func (r *DownloadRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, er
 	downloadRequest := &velerov1api.DownloadRequest{}
 	if err := r.Client.Get(r.Ctx, req.NamespacedName, downloadRequest); err != nil {
 		if apierrors.IsNotFound(err) {
-			log.WithError(err).Error("DownloadRequest not found")
+			// Object not found, return.  Created objects are automatically garbage collected.
 			return ctrl.Result{}, nil
 		}
 
-		log.WithError(err).Error("Error getting DownloadRequest")
 		// Error reading the object - requeue the request.
 		return ctrl.Result{}, err
 	}
 
-	switch downloadRequest.Status.Phase {
-	case "", velerov1api.DownloadRequestPhaseNew:
-		if err := r.DownloadRequest.GeneratePreSignedURL(r.Ctx, r.Client, log, downloadRequest); err != nil {
-			log.WithError(err).Error("Unable to update the request")
-			return ctrl.Result{Requeue: true}, err
-		}
-	case velerov1api.DownloadRequestPhaseProcessed:
-		if err := r.DownloadRequest.DeleteIfExpired(downloadRequest); err != nil {
-			log.WithError(err).Error("Unable to update the request")
-			return ctrl.Result{Requeue: true}, err
-		}
+	// Initialize the patch helper.
+	patchHelper, err := patch.NewHelper(downloadRequest, r.Client)
+	if err != nil {
+		return ctrl.Result{}, err
 	}
+
+	defer func() {
+		// Always attempt to Patch the downloadRequest object and status after each reconciliation.
+		// Patch ObservedGeneration only if the reconciliation completed successfully
+		if err := patchHelper.Patch(r.Ctx, downloadRequest); err != nil {
+			// reterr = kerrors.NewAggregate([]error{reterr, err})
+			return
+		}
+	}()
+
+	backupName := downloadRequest.Spec.Target.Name
+	if downloadRequest.Status.Phase == velerov1api.DownloadRequestPhaseNew {
+		// if err := r.DownloadRequest.GeneratePreSignedURL(r.Ctx, r.Client, log, downloadRequest); err != nil {
+		// 	log.WithError(err).Error("Unable to update the request")
+		// 	return ctrl.Result{Requeue: true}, err
+		// }
+		if downloadRequest.Spec.Target.Kind == velerov1api.DownloadTargetKindRestoreLog ||
+			downloadRequest.Spec.Target.Kind == velerov1api.DownloadTargetKindRestoreResults {
+			restore := &velerov1api.Restore{}
+			if err := r.Client.Get(r.Ctx, req.NamespacedName, restore); err != nil {
+				return ctrl.Result{Requeue: true}, errors.WithStack(err)
+			}
+			backupName = restore.Spec.BackupName
+		}
+	} else if downloadRequest.Status.Phase == velerov1api.DownloadRequestPhaseProcessed {
+		if downloadRequest.Status.Expiration.Time.After(r.Clock.Now()) {
+			log.Debug("DownloadRequest has not expired")
+			return ctrl.Result{Requeue: true}, nil
+		}
+		log.Debug("DownloadRequest has expired - deleting")
+		// return errors.WithStack(c.downloadRequestClient.DownloadRequests(downloadRequest.Namespace).Delete(context.TODO(), downloadRequest.Name, metav1.DeleteOptions{}))
+	}
+
+	backup := &velerov1api.Backup{}
+	if err := r.Client.Get(context.Background(), client.ObjectKey{
+		Namespace: downloadRequest.Namespace,
+		Name:      backupName,
+	}, backup); err != nil {
+		return ctrl.Result{Requeue: true}, errors.WithStack(err)
+	}
+
+	backupLocation := &velerov1api.BackupStorageLocation{}
+	if err := r.Client.Get(context.Background(), client.ObjectKey{
+		Namespace: backup.Namespace,
+		Name:      backup.Spec.StorageLocation,
+	}, backupLocation); err != nil {
+		return ctrl.Result{Requeue: true}, errors.WithStack(err)
+	}
+
+	backupStore, err := r.BackupStoreManager.GetBackupStore(backupLocation, log)
+	if downloadRequest.Status.DownloadURL, err = backupStore.GetDownloadURL(downloadRequest.Spec.Target); err != nil {
+		return ctrl.Result{Requeue: true}, err
+	}
+	downloadRequest.Status.Phase = velerov1api.DownloadRequestPhaseProcessed
+	downloadRequest.Status.Expiration = &metav1.Time{Time: r.Clock.Now().Add(persistence.DownloadURLTTL)}
 
 	// Requeue is mostly to handle deleting any expired requests that were not
 	// deleted as part of the normal client flow for whatever reason.
@@ -84,63 +138,3 @@ func (r *DownloadRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&velerov1api.DownloadRequest{}).
 		Complete(r)
 }
-
-// type downloadRequestController struct {
-// 	*genericController
-
-// 	downloadRequestClient velerov1client.DownloadRequestsGetter
-// 	downloadRequestLister velerov1listers.DownloadRequestLister
-// 	restoreLister         velerov1listers.RestoreLister
-// 	clock                 clock.Clock
-// 	kbClient              client.Client
-// 	backupLister          velerov1listers.BackupLister
-// 	newPluginManager      func(logrus.FieldLogger) clientmgmt.Manager
-// 	newBackupStore        func(*velerov1api.BackupStorageLocation, persistence.ObjectStoreGetter, logrus.FieldLogger) (persistence.BackupStore, error)
-// }
-
-// // NewDownloadRequestController creates a new DownloadRequestController.
-// func NewDownloadRequestController(
-// 	downloadRequestClient velerov1client.DownloadRequestsGetter,
-// 	downloadRequestInformer velerov1informers.DownloadRequestInformer,
-// 	restoreLister velerov1listers.RestoreLister,
-// 	kbClient client.Client,
-// 	backupLister velerov1listers.BackupLister,
-// 	newPluginManager func(logrus.FieldLogger) clientmgmt.Manager,
-// 	logger logrus.FieldLogger,
-// ) Interface {
-// 	c := &downloadRequestController{
-// 		genericController:     newGenericController("downloadrequest", logger),
-// 		downloadRequestClient: downloadRequestClient,
-// 		downloadRequestLister: downloadRequestInformer.Lister(),
-// 		restoreLister:         restoreLister,
-// 		kbClient:              kbClient,
-// 		backupLister:          backupLister,
-
-// 		// use variables to refer to these functions so they can be
-// 		// replaced with fakes for testing.
-// 		newPluginManager: newPluginManager,
-// 		newBackupStore:   persistence.NewObjectBackupStore,
-
-// 		clock: &clock.RealClock{},
-// 	}
-
-// 	c.syncHandler = c.processDownloadRequest
-
-// 	downloadRequestInformer.Informer().AddEventHandler(
-// 		cache.ResourceEventHandlerFuncs{
-// 			AddFunc: func(obj interface{}) {
-// 				key, err := cache.MetaNamespaceKeyFunc(obj)
-// 				if err != nil {
-// 					downloadRequest := obj.(*velerov1api.DownloadRequest)
-// 					c.logger.WithError(errors.WithStack(err)).
-// 						WithField("downloadRequest", downloadRequest.Name).
-// 						Error("Error creating queue key, item not added to queue")
-// 					return
-// 				}
-// 				c.queue.Add(key)
-// 			},
-// 		},
-// 	)
-
-// 	return c
-// }
