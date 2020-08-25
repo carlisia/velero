@@ -18,6 +18,7 @@ package controller
 
 import (
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -28,6 +29,8 @@ import (
 	"github.com/vmware-tanzu/velero/internal/velero"
 	velerov1api "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 )
+
+const resyncPeriod = 1 * time.Minute
 
 // BackupStorageLocationReconciler reconciles a BackupStorageLocation object
 type BackupStorageLocationReconciler struct {
@@ -96,7 +99,7 @@ func (r *BackupStorageLocationReconciler) Reconcile(req ctrl.Request) (ctrl.Resu
 
 	r.logReconciledPhase(defaultFound, locationList, unavailableErrors)
 
-	return ctrl.Result{Requeue: true}, nil
+	return ctrl.Result{RequeueAfter: resyncPeriod}, nil
 }
 
 func (r *BackupStorageLocationReconciler) logReconciledPhase(defaultFound bool, locationList velerov1api.BackupStorageLocationList, errs []string) {
