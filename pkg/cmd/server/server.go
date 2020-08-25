@@ -852,19 +852,21 @@ func (s *server) runControllers(defaultVolumeSnapshotLocations map[string]string
 		s.logger.WithField("informer", informer).Info("Informer cache synced")
 	}
 
-	storageLocationInfo := velero.StorageLocation{
-		Client:                          s.mgr.GetClient(),
-		Ctx:                             s.ctx,
-		DefaultStorageLocation:          s.config.defaultBackupLocation,
-		DefaultStoreValidationFrequency: s.config.storeValidationFrequency,
-		NewPluginManager:                newPluginManager,
-		NewBackupStore:                  persistence.NewObjectBackupStore,
+	bslr := controller.BackupStorageLocationReconciler{
+		Ctx:    s.ctx,
+		Client: s.mgr.GetClient(),
+		Scheme: s.mgr.GetScheme(),
+		DefaultBackupLocationInfo: velero.DefaultBackupLocationInfo{
+			DefaultStorageLocation:          s.config.defaultBackupLocation,
+			DefaultStoreValidationFrequency: s.config.storeValidationFrequency,
+		},
+		BackupStoreManager: velero.BackupStoreManager{
+			NewPluginManager: newPluginManager,
+			NewBackupStore:   persistence.NewObjectBackupStore,
+		},
+		Log: s.logger,
 	}
-	if err := (&controller.BackupStorageLocationReconciler{
-		Scheme:          s.mgr.GetScheme(),
-		StorageLocation: storageLocationInfo,
-		Log:             s.logger,
-	}).SetupWithManager(s.mgr); err != nil {
+	if err := bslr.SetupWithManager(s.mgr); err != nil {
 		s.logger.Fatal(err, "unable to create controller", "controller", "BackupStorageLocation")
 	}
 
