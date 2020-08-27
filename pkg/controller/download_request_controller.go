@@ -121,8 +121,14 @@ func (r *DownloadRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, er
 		return ctrl.Result{Requeue: true}, errors.WithStack(err)
 	}
 
-	backupStore, err := r.BackupStoreManager.GetBackupStore(backupLocation, log)
-	if downloadRequest.Status.DownloadURL, err = backupStore.GetDownloadURL(downloadRequest.Spec.Target); err != nil {
+	locationStore, err := velero.NewLocationStore(r.BackupStoreManager, r.DefaultBackupLocationInfo, location, r.Log)
+	if err != nil {
+		log.WithError(err).Error("Error getting a backup store")
+		// continue
+	}
+
+	// backupStore, err := r.BackupStoreManager.GetBackupStore(backupLocation, log)
+	if downloadRequest.Status.DownloadURL, err = locationStore..GetDownloadURL(downloadRequest.Spec.Target); err != nil {
 		return ctrl.Result{Requeue: true}, err
 	}
 	downloadRequest.Status.Phase = velerov1api.DownloadRequestPhaseProcessed
@@ -134,7 +140,7 @@ func (r *DownloadRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, er
 }
 
 func (r *DownloadRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
+	return ctrl.NewControllerManagedBy(mgr).WithOptions(options controller.Options)
 		For(&velerov1api.DownloadRequest{}).
 		Complete(r)
 }
